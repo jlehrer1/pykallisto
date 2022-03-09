@@ -1,5 +1,5 @@
 # pykallisto
-A Python API for RNA-seq alignment and normalization via Kallisto.
+A Python API for RNA-seq alignment, quantification and normalization via Kallisto.
 
 ## Usage
 
