@@ -4,7 +4,6 @@ A Python API for RNA-seq alignment, quantification normalization via Kallisto. P
 
  All thanks for the technologies and beautiful command line tools goes to them. All I did was wrap them in a Python API for easy handling of data in larger pipelines, to allow for pure Python single-cell analysis in a single line of code.
 
-
 ## Usage
 Initialize a Kallisto class object via 
 ```python
