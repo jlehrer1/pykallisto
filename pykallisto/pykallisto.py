@@ -91,8 +91,7 @@ class Kallisto:
         list: bool=False,
         threads: int=1
     ) -> None: 
-
-        
+    
         os.system(
             f"kallisto bus --index={self._index.file} "
             f"--output-dir={output_dir}"
@@ -104,25 +103,95 @@ class Kallisto:
 
     def pseudo(
         self, 
-        index_file: str,
         output_dir: str,
+        umi: bool=False,
+        batch: str=None,
+        single: bool=False,
+        fragment_length: float=None,
+        sd: float=None,
         threads: int=1,
     ) -> None:
 
         os.system(
-            ""
+            "kallisto pseudo "
+            f"--index={self._index_file} ",
+            f"--output-dir={output_dir} ",
+            f"{'--umi ' if umi else ''}",
+            f"{f'--batch={batch} ' if batch else ''}"
+            f"{'--single ' if single else ''}"
+            f"{f'--fragment-length={fragment_length} ' if fragment_length else ''}"
+            f"{f'--sd={sd} ' if sd else ''}"
+            f"--threads={threads}"
         )
 
 class KB:
     def __init__(
         self,
-        files,
+        files: List[str]
     ) -> None:
         self.files = files 
 
     def info(self):
+        os.system(
+            "kb info"
+        )
+
+    def ref(
+        self, 
+        index: str,
+        t2g: str,
+        fasta: str,
+        tmp: str=None,
+        keep_temp: bool=False,
+        verbose: bool=False,
+        include_attribute: Dict[str, str]=None,
+        exclude_attribute: Dict[str, str]=None,
+        d: str=None,
+        k: str=None,
+        workflow: str='standard',
+        overwrite: bool=False,
+        kallisto: str=None,
+        bustools: str=None
+    ) -> None:
         pass 
 
-    def ref(self, index_file):
+    def count(
+        self,
+        files: List[str],
+        index: str,
+        t2g: str,
+        technology: str,
+        temp,
+        keep_tmp,
+        verbose,
+        out,
+        whilelist,
+        threads,
+        memory,
+        strand,
+        workflow,
+        em,
+        umi_gene,
+        mm,
+        tcc,
+        filter,
+        filter_threshold,
+        overwrite,
+        dry_run,
+        loom,
+        h5ad,
+        cellranger,
+        gene_names,
+        report,
+        kallisto,
+        bustools,
+        c1,
+        c2,
+        parity,
+        fragment_l,
+        fragment_s,
+    ) -> None:
         pass 
-          
+
+    def 
+

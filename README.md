@@ -9,7 +9,7 @@ Initialize a Kallisto class object via
 ```python
 from pykallisto import Kallisto 
 
-data = Kallisto(files['fastq1.fasta', 'fastq2.fasta', 'fastq3.fasta'])
+data = Kallisto(files=['fastq1.fasta', 'fastq2.fasta', 'fastq3.fasta'])
 
 # Generate the index file for pseudoalignment 
 data.index(index='index', output_dir='index_directory/')
