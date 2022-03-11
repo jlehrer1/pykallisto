@@ -2,7 +2,8 @@ from multiprocessing.sharedctypes import Value
 import os 
 import pathlib 
 from typing import *
-import subprocess 
+import subprocess
+from xml.etree.ElementInclude import include 
 
 class Kallisto:
     def __init__(
@@ -81,7 +82,9 @@ class Kallisto:
             f"--output={output_dir} {filestr}"
         )
 
-        return command 
+        os.system(
+            command 
+        ) 
 
     def bus(
         self,
@@ -91,14 +94,18 @@ class Kallisto:
         list: bool=False,
         threads: int=1
     ) -> None: 
-    
-        os.system(
+
+        command = (
             f"kallisto bus --index={self._index.file} "
             f"--output-dir={output_dir}"
             f"--technology={technology}"
             f"--threads={threads}"
             f"{'--list ' if list else ''}"
             f"{''.join(*files)}"
+        )
+
+        os.system(
+            command 
         )
 
     def pseudo(
@@ -112,8 +119,7 @@ class Kallisto:
         threads: int=1,
     ) -> None:
 
-        os.system(
-            "kallisto pseudo "
+        command = ("kallisto pseudo "
             f"--index={self._index_file} ",
             f"--output-dir={output_dir} ",
             f"{'--umi ' if umi else ''}",
@@ -122,6 +128,10 @@ class Kallisto:
             f"{f'--fragment-length={fragment_length} ' if fragment_length else ''}"
             f"{f'--sd={sd} ' if sd else ''}"
             f"--threads={threads}"
+        )
+
+        os.system(
+            command 
         )
 
 class KB:
@@ -140,7 +150,7 @@ class KB:
         self, 
         index: str,
         t2g: str,
-        fasta: str,
+        fasta: str=None,
         tmp: str=None,
         keep_temp: bool=False,
         verbose: bool=False,
@@ -151,47 +161,138 @@ class KB:
         workflow: str='standard',
         overwrite: bool=False,
         kallisto: str=None,
-        bustools: str=None
+        bustools: str=None,
+        f2: str=None,
+        c1: str=None,
+        c2: str=None
     ) -> None:
-        pass 
+
+        if fasta and not d:
+            raise ValueError("Error, -f1 FASTA argument is only valid with -d passed")
+
+        if d and not fasta:
+            raise ValueError("Error, -f1 FASTA argument required with optional argument -d passed.")
+
+        if workflow == 'lamano' or workflow == 'nucleus':
+            if not f2 or not c1 or not c2:
+                raise ValueError("Error, optional arguments -f2, -c1, -c2 are required with lamano or nucleus workflows.")
+
+        if include_attribute:
+            include_attribute_str = [f'--include-attributes={key}:{val} ' for key, val in include_attribute]
+            include_attribute_str = ''.join(*include_attribute)
+
+        if exclude_attribute:
+            exclude_attribute_str = [f'--exclude-attributes={key}:{val} ' for key, val in exclude_attribute]
+            exclude_attribute_str = ''.join(*exclude_attribute_str)
+        
+        command = (
+            "kb ref "
+            f"-i={index} "
+            f"-g={t2g} "
+            f"{f'-f1={fasta} ' if fasta else ''}"
+            f"{'--tmp ' if tmp else ''}"
+            f"{'--keep-tmp ' if keep_temp else ''}"
+            f"{'--verbose ' if verbose else ''}"
+            f"{include_attribute_str if include_attribute else ''}"
+            f"{exclude_attribute_str if exclude_attribute else ''}"
+            f"{f'-d={d} ' if d else ''}"
+            f"{f'k={k} ' if k else ''}"
+            f"{f'workflow={workflow} ' if workflow else ''}"
+            f"{'--overwrite ' if overwrite else ''}"
+            f"{f'--kallisto={kallisto} ' if kallisto else ''}"
+            f"{f'--bustools={bustools} ' if bustools else ''}"
+        )
+
+        os.system(
+            command 
+        ) 
 
     def count(
         self,
-        files: List[str],
+        fastqs: List[str],
         index: str,
         t2g: str,
         technology: str,
-        temp,
-        keep_tmp,
-        verbose,
-        out,
-        whilelist,
-        threads,
-        memory,
-        strand,
-        workflow,
-        em,
-        umi_gene,
-        mm,
-        tcc,
-        filter,
-        filter_threshold,
-        overwrite,
-        dry_run,
-        loom,
-        h5ad,
-        cellranger,
-        gene_names,
-        report,
-        kallisto,
-        bustools,
-        c1,
-        c2,
-        parity,
-        fragment_l,
-        fragment_s,
+        tmp: bool=False,
+        keep_tmp: bool=False,
+        verbose: bool=False,
+        out: str=None,
+        whitelist: str=None,
+        threads: int=1,
+        memory: str=None,
+        strand: str=None,
+        workflow: str=None,
+        em: bool=False,
+        umi_gene: bool=False,
+        mm: bool=False,
+        tcc: bool=False,
+        filter: str=None,
+        filter_threshold: int=None,
+        overwrite: bool=False,
+        dry_run: bool=False,
+        loom: bool=False,
+        h5ad: bool=False,
+        cellranger: bool=False,
+        gene_names: bool=False,
+        report: bool=False,
+        kallisto: str=None,
+        bustools: str=None,
+        c1: str=None,
+        c2: str=None,
+        parity: str=None,
+        fragment_l: int=None,
+        fragment_s: int=None,
     ) -> None:
-        pass 
+        if workflow == 'lamanno' or workflow == 'nucleus' and not c1 and not c2:
+            raise ValueError("Optional flags -c1 and -c2 are required when using lamanno or nucleus workflows.")
+        
+        if parity or fragment_l or fragment_s and (not technology == 'BULK' or not technology == 'SMARTSEQ2'):
+            raise ValueError("--parity, --fragment-s and --fragment-l optional parameters are only valid for technologies: BULK or SMARTSEQ2")
+        
+        files = ''.join(*files)
 
-    def 
+        command = (
+            "kb count "
+            f"-i {index} "
+            f"-g {t2g} "
+            f"-x {technology} "
+            f"{'--tmp ' if tmp else ''}"
+            f"{'--keep-tmp ' if keep_tmp else ''}"
+            f"{'--verbose ' if verbose else ''}"
+            f"{f'-o {out} ' if out else ''}"
+            f"{f'-w {whitelist} ' if whitelist else ''}"
+            f"{f'-t {threads} ' if threads else ''}"
+            f"{f'--strand={strand} ' if strand else ''}"
+            f"{f'--workflow={workflow} ' if workflow else ''}"
+            f"{'--em ' if em else ''}"
+            f"{'--umi-gene ' if umi_gene else ''}"
+            f"{'-mm ' if mm else ''}"
+            f"{'--tcc ' if tcc else ''}"
+            f"{f'--filter={filter} ' if filter else ''}"
+            f"{f'--filter-threshold={filter_threshold} ' if filter_threshold else ''}"
+            f"{'--overwrite ' if overwrite else ''}"
+            f"{'--dry-run ' if dry_run else ''}"
+            f"{'--loom ' if loom else ''}"
+            f"{'--h5ad ' if h5ad else ''}"
+            f"{'--cellranger ' if cellranger else ''}"
+            f"{'--gene-names ' if gene_names else ''}"
+            f"{'--report ' if report else ''}"
+            f"{f'--kallisto={kallisto} ' if kallisto else ''}"
+            f"{f'--bustools={bustools} ' if bustools else ''}"
+            f"{f'-c1 {c1} ' if c1 else ''}"
+            f"{f'-c2 {c2} ' if c2 else ''}"
+            f"{f'--parity={parity} ' if parity else ''}"
+            f"{f'--fragment-l={fragment_l} ' if fragment_l else ''}"
+            f"{f'--fragment-s={fragment_s} ' if fragment_s else ''}"
+        )
+
+        os.system(
+            command
+        )
+
+    def list(self):
+        os.system(
+            "kb list"
+        )
+
 
