@@ -93,7 +93,7 @@ class Kallisto:
         technology: str,
         list: bool=False,
         threads: int=1
-    ) -> None: 
+    ) -> None:
 
         command = (
             f"kallisto bus --index={self._index.file} "
@@ -134,13 +134,13 @@ class Kallisto:
             command 
         )
 
-class KB:
+class KallistoBus:
     def __init__(
         self,
-        files: List[str]
+        files: List[str],
     ) -> None:
         self.files = files 
-
+        
     def info(self):
         os.system(
             "kb info"
@@ -209,10 +209,10 @@ class KB:
 
     def count(
         self,
-        fastqs: List[str],
         index: str,
         t2g: str,
         technology: str,
+        fastqs: List[str]=None,
         tmp: bool=False,
         keep_tmp: bool=False,
         verbose: bool=False,
@@ -249,6 +249,12 @@ class KB:
         if parity or fragment_l or fragment_s and (not technology == 'BULK' or not technology == 'SMARTSEQ2'):
             raise ValueError("--parity, --fragment-s and --fragment-l optional parameters are only valid for technologies: BULK or SMARTSEQ2")
         
+        if not fastqs:
+            fastqs = self.files
+        
+        if fastqs and self.files:
+            print('Warning: KallistoBus object initialized with fastq file list and files list passed. Using arguments past list.')
+
         files = ''.join(*files)
 
         command = (
@@ -284,6 +290,7 @@ class KB:
             f"{f'--parity={parity} ' if parity else ''}"
             f"{f'--fragment-l={fragment_l} ' if fragment_l else ''}"
             f"{f'--fragment-s={fragment_s} ' if fragment_s else ''}"
+            f"fastqs {files}"
         )
 
         os.system(

@@ -1,1 +1,1 @@
-from .pykallisto import Kallisto, KB
+from .pykallisto import Kallisto, KallistoBus
