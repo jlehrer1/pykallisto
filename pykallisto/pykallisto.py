@@ -11,7 +11,6 @@ class Kallisto:
         index_file=None 
     ):  
         self.files = self._validate_files(files)
-
         self._index_file = (index_file if index_file else None) 
 
     def _validate_files(files):
@@ -28,10 +27,11 @@ class Kallisto:
         if isinstance(files, str):
             files = [os.path.join(files, f) for f in os.listdir(files)]
         elif isinstance(files, list):
-            files = files 
+            files = [f.strip() for f in files]
         else:
             raise ValueError("files must be path to files or list of files")
-        return files 
+
+        return ' '.join(files)
 
     def _validate_input(self, files, index):
         """
@@ -57,27 +57,30 @@ class Kallisto:
         if not self._index_file and not index:
             raise ValueError("Index files not generated. Run self.index() or pass the path to the index file.")
 
-        return self._validate_files(files), index 
+        files = self._validate_files(files)
+
+        return files, index 
 
     def index(
         self,
-        index,
+        index: str=None,
+        files: Union[str, List[str]]=None,
         kmer_size: int=None,
         make_unique: bool=False 
-    ):  
+    ):
         """
         Builds kallisto index via pseudoalignment
 
-        Parameters:
+        Arguments:
         index: Path to index file. If Kallisto class was initialized with an index filename, this argument is optional.
+        files: List of fastq files or path to folder
         kmer_size: k-mer (odd) length (default: 31, max value: 31)
         make_unique: Replace repeated target names with unique names
 
         Returns:
         None
         """
-        self._index_file = index 
-        files = ' '.join(self.files)
+        files, index = self._validate_input(index, files)
 
         command = (
             "kallisto index "
@@ -116,7 +119,7 @@ class Kallisto:
         """
         Computes equivalence classes for reads and quantifies abundances.
 
-        Parameters:
+        Arguments:
         output_dir: Directory to write output to
         index: Filename for kallisto index to be used. If Kallisto class was initialized with a index filename, this argument is optional
         files: List of fastq file paths, or path to folder containing fastq files 
@@ -142,7 +145,7 @@ class Kallisto:
         None
         """
 
-        files, index = self._validate_input(files, index)
+        files, index = self._validate_input(index, files)
 
         if not files:
             files = self.files
@@ -180,8 +183,8 @@ class Kallisto:
     def bus(
         self,
         output_dir: str,
-        files: Union[List[str], str],
-        technology: str,
+        files: Union[List[str], str]=None,
+        technology: str=None,
         index: str=None,
         list: bool=False,
         batch: str=None,
@@ -195,8 +198,10 @@ class Kallisto:
         paired: bool=False,
         genomebam: bool=False,
         chromosomes: bool=False,
+        gtf: bool=False,
         verbose: bool=False,
     ) -> None:
+
 
         """
         Generates BUS files for single-cell sequencing
@@ -228,11 +233,24 @@ class Kallisto:
 
         files = ' '.join(files)
         command = (
-            f"kallisto bus --index={index} "
-            f"--output-dir={output_dir}"
-            f"--technology={technology}"
-            f"--threads={threads}"
+            f"kallisto bus "
+            f"--index={index} "
+            f"--output-dir={output_dir} "
+            f"--technology={technology} "
             f"{'--list ' if list else ''}"
+            f"{f'--batch={batch} ' if batch else ''}"
+            f"--threads={threads} "
+            f"{'--bam ' if bam else ''}"
+            f"{'--num ' if num else ''}"
+            f"{f'--tag={tag} ' if tag else ''}"
+            f"{'--fr-stranded ' if fr_stranded else ''}"
+            f"{'--rf-stranded ' if rf_stranded else ''}"
+            f"{'--unstranded ' if unstranded else ''}"
+            f"{'--paired ' if paired else ''}"
+            f"{'--genomebam ' if genomebam else ''}"
+            f"{'--chromosomes ' if chromosomes else ''}"
+            f"{'--gtf ' if gtf else ''}"
+            f"{'--verbose ' if verbose else ''}"
             f"{files}"
         )
 
@@ -253,6 +271,9 @@ class Kallisto:
         threads: int=1,
     ) -> None:
         """
+        Computes equivalence classes for reads and quantifies abundances (deprecated).
+
+        Arguments:
         index: Filename for the kallisto index to be used for pseudoalignment. If Kallisto class was initialized with index file name, this is optional
         files: List of fastq file paths, or path to folder containing fastq files
         output_dir: Directory to write output to
@@ -283,7 +304,7 @@ class Kallisto:
             f"{f'--fragment-length={fragment_length} ' if fragment_length else ''}"
             f"{f'--sd={sd} ' if sd else ''}"
             f"--threads={threads} "
-            f"{' '.join(files)}"
+            f"{files}"
         )
 
         os.system(
@@ -311,7 +332,7 @@ class Kallisto:
     ):
         command = (
             "kallisto merge "
-            f"--index={index}"
+            f"--index={index} "
             f"--output-dir={output_dir}"
         )
 
