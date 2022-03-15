@@ -3,29 +3,42 @@ import os
 import pathlib 
 from typing import *
 import subprocess
-from xml.etree.ElementInclude import include 
 
 class Kallisto:
     def __init__(
         self, 
-        files: List[str]=None,
-    ):
-        self.files = files 
-        self._index_file = None 
+        files: Union[List[str], str]=None,
+        index_file=None 
+    ):  
+        if isinstance(files, str):
+            self.files = [os.path.join(files, f) for f in os.listdir(files)]
+        elif isinstance(files, list):
+            self.files = files 
+        else:
+            raise ValueError("files must be path to files or list of files")
+        
+        self._index_file = (index_file if index_file else None) 
 
     def index(
         self,
         index,
         kmer_size: int=None,
+        make_unique: bool=False 
     ):  
         """Builds pseudoindex for Kalliso"""
-        if not kmer_size:
-            kmer_size = 31
-
         self._index_file = index 
+        files = ' '.join(self.files)
+
+        command = (
+            "kallisto index "
+            f"--index={index} "
+            f"{f'--kmer-size={kmer_size} ' if kmer_size else ''}"
+            f"{'--make-unique ' if make_unique else ''}"
+            f"{files}"
+        )
 
         os.system(
-            f"kallisto index --index={index} --kmer-size={kmer_size}"
+            command 
         )
 
     def quant(
@@ -59,7 +72,7 @@ class Kallisto:
 
         if not self._index_file:
             raise ValueError("Index files not generated. Run self.index().")
-        filestr = ''.join(*files)
+        filestr = ' '.join(files)
 
         command = (
             f"kallisto quant " 
@@ -95,13 +108,14 @@ class Kallisto:
         threads: int=1
     ) -> None:
 
+        files = ' '.join(files)
         command = (
             f"kallisto bus --index={self._index.file} "
             f"--output-dir={output_dir}"
             f"--technology={technology}"
             f"--threads={threads}"
             f"{'--list ' if list else ''}"
-            f"{''.join(*files)}"
+            f"{files}"
         )
 
         os.system(
@@ -179,11 +193,11 @@ class KallistoBus:
 
         if include_attribute:
             include_attribute_str = [f'--include-attributes={key}:{val} ' for key, val in include_attribute]
-            include_attribute_str = ''.join(*include_attribute)
+            include_attribute_str = ' '.join(include_attribute)
 
         if exclude_attribute:
             exclude_attribute_str = [f'--exclude-attributes={key}:{val} ' for key, val in exclude_attribute]
-            exclude_attribute_str = ''.join(*exclude_attribute_str)
+            exclude_attribute_str = ' '.join(exclude_attribute_str)
         
         command = (
             "kb ref "
@@ -255,7 +269,7 @@ class KallistoBus:
         if fastqs and self.files:
             print('Warning: KallistoBus object initialized with fastq file list and files list passed. Using arguments past list.')
 
-        files = ''.join(*files)
+        files = ' '.join(files)
 
         command = (
             "kb count "
