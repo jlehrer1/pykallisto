@@ -5,9 +5,7 @@ import os
 here = pathlib.Path(__file__).parent.resolve()
 
 k = Kallisto(
-    files=os.path.join(here, '..', 'local', 'fastq')
+    files=os.path.join(here, '..', 'local', 'pbmc_1k_v3_fastqs')
 )
 
-print(k.files)
-
-k.index(index='index_file', threads=4)
+k.index(index='index_file', make_unique=True)

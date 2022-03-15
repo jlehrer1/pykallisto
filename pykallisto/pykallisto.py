@@ -44,6 +44,7 @@ class Kallisto:
     def quant(
         self, 
         output_dir: str, 
+        index: str=None,
         files: List[str]=None,
         bias: bool=False,
         bootstrap_samples: int=None,
@@ -67,16 +68,21 @@ class Kallisto:
         if files and self.files:
             print('Warning: Class initialized with files list & files list passed. Using passed list.')
 
+        if self._index_file and index:
+            print('Index file generated and index file argument passed, using passed argument.')
+
+        if not self._index_file and not index:
+            raise ValueError("Index files not generated. Run self.index() or pass the path to the index file.")
+
         if not files:
             files = self.files
+        index = (index if index else self._index_file)
 
-        if not self._index_file:
-            raise ValueError("Index files not generated. Run self.index().")
         filestr = ' '.join(files)
 
         command = (
             f"kallisto quant " 
-            f"--index={self._index_file} "
+            f"--index={index} "
             f"{'--bias ' if bias else ''}"
             f"{'--bootstrap_samples={bootstrap_samples} ' if bootstrap_samples else ''}"
             f"--seed={seed} "
@@ -193,7 +199,7 @@ class Kallisto:
         os.system(
             command
         )
-        
+
 class KallistoBus:
     def __init__(
         self,
@@ -209,8 +215,10 @@ class KallistoBus:
     def ref(
         self, 
         index: str,
-        t2g: str,
+        t2g: str, 
         fasta: str=None,
+        gtf: str=None,
+        feature: str=None,
         tmp: str=None,
         keep_temp: bool=False,
         verbose: bool=False,
@@ -245,6 +253,11 @@ class KallistoBus:
             exclude_attribute_str = [f'--exclude-attributes={key}:{val} ' for key, val in exclude_attribute]
             exclude_attribute_str = ' '.join(exclude_attribute_str)
         
+        if feature and not workflow == 'kite':
+            raise ValueError("Error: Positional argument 'feature' only valid with 'kite' workflow. ")
+        
+        fasta = ' '.join(fasta)
+
         command = (
             "kb ref "
             f"-i={index} "
@@ -261,6 +274,7 @@ class KallistoBus:
             f"{'--overwrite ' if overwrite else ''}"
             f"{f'--kallisto={kallisto} ' if kallisto else ''}"
             f"{f'--bustools={bustools} ' if bustools else ''}"
+            f"{fasta} {gtf} {feature if feature else ''}"
         )
 
         os.system(
