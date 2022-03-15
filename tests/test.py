@@ -1,4 +1,11 @@
-from pykallisto import Kallisto 
+from pykallisto import Kallisto, KallistoBus
+import pathlib 
+import os 
 
-test = Kallisto(files=['asdf'])
-print(test.quant(output_dir='asdf').strip())
+here = pathlib.Path(__file__).parent.resolve()
+
+k = KallistoBus(
+    files=os.path.join(here, '..', 'local', 'pbmc_1k_v3_fastqs')
+)
+
+# k.ref(index='index', t2g='t2g', )

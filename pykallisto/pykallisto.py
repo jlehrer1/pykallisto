@@ -10,14 +10,54 @@ class Kallisto:
         files: Union[List[str], str]=None,
         index_file=None 
     ):  
+        self.files = self._validate_files(files)
+
+        self._index_file = (index_file if index_file else None) 
+
+    def _validate_files(files):
+        """
+        Handles files being a list of fastq files, or the path to a folder containing fastq files.
+
+        Input:
+        files: Union[str, List[str]]: List of files or path to folder 
+
+        Returns:
+        List[str]: List containing absolute paths to all fastq files
+        """
+
         if isinstance(files, str):
-            self.files = [os.path.join(files, f) for f in os.listdir(files)]
+            files = [os.path.join(files, f) for f in os.listdir(files)]
         elif isinstance(files, list):
-            self.files = files 
+            files = files 
         else:
             raise ValueError("files must be path to files or list of files")
-        
-        self._index_file = (index_file if index_file else None) 
+        return files 
+
+    def _validate_input(self, files, index):
+        """
+        Validates files input and index input, since the Kallisto class can be initialized with either or have either passed for maximum flexibility
+
+        Input:
+        files: Union[str, List[str]]: List of files or path to folder 
+        index: Index file name 
+
+        Returns:
+        List[str], str: List containing fastq file paths, and index file name 
+        """
+        # If no files are passed and class wasn't initialized with any 
+        if not files and not self.files:
+            raise ValueError("One of self.files or files argument must not be None.")
+
+        if files and self.files:
+            print('Warning: Class initialized with files list & files list passed. Using passed list.')
+
+        if self._index_file and index:
+            print('Warning: Index file generated and index file argument passed, using passed argument.')
+
+        if not self._index_file and not index:
+            raise ValueError("Index files not generated. Run self.index() or pass the path to the index file.")
+
+        return self._validate_files(files), index 
 
     def index(
         self,
@@ -25,7 +65,17 @@ class Kallisto:
         kmer_size: int=None,
         make_unique: bool=False 
     ):  
-        """Builds pseudoindex for Kalliso"""
+        """
+        Builds kallisto index via pseudoalignment
+
+        Parameters:
+        index: Path to index file. If Kallisto class was initialized with an index filename, this argument is optional.
+        kmer_size: k-mer (odd) length (default: 31, max value: 31)
+        make_unique: Replace repeated target names with unique names
+
+        Returns:
+        None
+        """
         self._index_file = index 
         files = ' '.join(self.files)
 
@@ -45,7 +95,7 @@ class Kallisto:
         self, 
         output_dir: str, 
         index: str=None,
-        files: List[str]=None,
+        files: Union[List[str], str]=None,
         bias: bool=False,
         bootstrap_samples: int=None,
         seed: int=42, 
@@ -60,31 +110,52 @@ class Kallisto:
         pseudobam: bool=False,
         genomebam: bool=False,
         gtf: str = None,
-        chromosomes: str=None
+        chromosomes: str=None,
+        verbose=False
     ):
-        if not files and not self.files:
-            raise ValueError("One of self.files or files argument must not be None.")
+        """
+        Computes equivalence classes for reads and quantifies abundances.
 
-        if files and self.files:
-            print('Warning: Class initialized with files list & files list passed. Using passed list.')
+        Parameters:
+        output_dir: Directory to write output to
+        index: Filename for kallisto index to be used. If Kallisto class was initialized with a index filename, this argument is optional
+        files: List of fastq file paths, or path to folder containing fastq files 
+        bias: Perform sequence based bias correction
+        bootstrap_samples: Number of bootstrap samples (default: 0)
+        seed: Seed for the bootstrap sampling (default: 42)
+        plaintext: Output plaintext instead of HDF5
+        fusion: Search for fusions for Pizzly
+        single: Quantify single-end reads
+        single-overhang: Include reads where unobserved rest of fragment is predicted to lie outside a transcript
+        fr_stranded: Strand specific reads, first read forward
+        rf_stranded: Strand specific reads, first read reverse
+        fragment_length: Estimated average fragment length
+        sd: Estimated standard deviation of fragment length (default: -l, -s values are estimated from paired end data, but are required when using --single)
+        threads: Number of threads to use (default: 1)
+        pseudobam: Save pseudoalignments to transcriptome to BAM file
+        genomebam: Project pseudoalignments to genome sorted BAM file
+        gtf: GTF file for transcriptome information (required for --genomebam)
+        chromosomes: Tab separated file with chromosome names and lengths(optional for --genomebam, but recommended)
+        verbose: Print out progress information every 1M proccessed reads
 
-        if self._index_file and index:
-            print('Index file generated and index file argument passed, using passed argument.')
+        Returns:
+        None
+        """
 
-        if not self._index_file and not index:
-            raise ValueError("Index files not generated. Run self.index() or pass the path to the index file.")
+        files, index = self._validate_input(files, index)
 
         if not files:
             files = self.files
         index = (index if index else self._index_file)
 
-        filestr = ' '.join(files)
+        files = ' '.join(files)
 
         command = (
             f"kallisto quant " 
             f"--index={index} "
+            f"--output={output_dir} "
             f"{'--bias ' if bias else ''}"
-            f"{'--bootstrap_samples={bootstrap_samples} ' if bootstrap_samples else ''}"
+            f"{f'--bootstrap_samples={bootstrap_samples} ' if bootstrap_samples else ''}"
             f"--seed={seed} "
             f"{'--plaintext ' if plaintext else ''}"
             f"{'--fusion ' if fusion else ''}"
@@ -98,7 +169,8 @@ class Kallisto:
             f"{'--genomebam ' if genomebam else ''}"
             f"{'--gtf ' if gtf else ''}"
             f"{'--chromosomes ' if chromosomes else ''}"
-            f"--output={output_dir} {filestr}"
+            f"{'--verbose ' if verbose else ''}"
+            f"{files}"
         )
 
         os.system(
@@ -108,15 +180,55 @@ class Kallisto:
     def bus(
         self,
         output_dir: str,
-        files: List[str],
+        files: Union[List[str], str],
         technology: str,
+        index: str=None,
         list: bool=False,
-        threads: int=1
+        batch: str=None,
+        threads: int=1,
+        bam: bool=False,
+        num: bool=False,
+        tag: str=None,
+        fr_stranded: bool=False,
+        rf_stranded: bool=False,
+        unstranded: bool=False,
+        paired: bool=False,
+        genomebam: bool=False,
+        chromosomes: bool=False,
+        verbose: bool=False,
     ) -> None:
+
+        """
+        Generates BUS files for single-cell sequencing
+        
+        output_dir: Directory to write output to
+        files: List of fastq file paths or path to folder containing fastq files 
+        technology: Single-cell technology used 
+        index: Filename for the kallisto index to be used for pseudoalignment. If Kallisto class was initialized with index file name, this is optional
+        list: List all single-cell technologies supported
+        batch: Process files listed in FILE
+        threads: Number of threads to use (default: 1)
+        bam: Input file is a BAM file
+        num: Output number of read in flag column (incompatible with --bam)
+        tag: sequence to identify UMI reads for certain technologies
+        fr_stranded: Strand specific reads for UMI-tagged reads, first read forward
+        rf_stranded: Strand specific reads for UMI-tagged reads, first read reverse
+        unstranded: Treat all read as non-strand-specific
+        paired: Treat reads as paired
+        genomebam: Project pseudoalignments to genome sorted BAM file
+        gtf: GTF file for transcriptome information (required for --genomebam)
+        chromosomes: Tab separated file with chromosome names and lengths (optional for --genomebam, but recommended)
+        verbose: Print out progress information every 1M proccessed reads
+
+        Returns:
+        None 
+        """
+
+        files, index = self._validate_input(files, index)
 
         files = ' '.join(files)
         command = (
-            f"kallisto bus --index={self._index.file} "
+            f"kallisto bus --index={index} "
             f"--output-dir={output_dir}"
             f"--technology={technology}"
             f"--threads={threads}"
@@ -131,6 +243,8 @@ class Kallisto:
     def pseudo(
         self, 
         output_dir: str,
+        files: Union[List[str], str]=None,
+        index: str=None,
         umi: bool=False,
         batch: str=None,
         single: bool=False,
@@ -138,6 +252,27 @@ class Kallisto:
         sd: float=None,
         threads: int=1,
     ) -> None:
+        """
+        index: Filename for the kallisto index to be used for pseudoalignment. If Kallisto class was initialized with index file name, this is optional
+        files: List of fastq file paths, or path to folder containing fastq files
+        output_dir: Directory to write output to
+        umi: First file in pair is a UMI file
+        batch: Process files listed in FILE
+        quant: Quantify using EM algorithm (only in batch mode)
+        bus: Output a BUS file
+        single: Quantify single-end reads
+        fragment_length: Estimated average fragment length
+        sd: Estimated standard deviation of fragment length (default: -l, -s values are estimated from paired end data, but are required when using --single unless outputting a BUS file via --bus)
+        fr_stranded: Strand specific reads, first read forward
+        rf_stranded: Strand specific reads, first read reverse
+        num: Output number of read in BUS file flag column (only with --bus)
+        threads: Number of threads to use (default: 1)
+
+        Returns:
+        None
+        """
+
+        files, index = self._validate_input(index, files)
 
         command = ("kallisto pseudo "
             f"--index={self._index_file} ",
@@ -147,7 +282,8 @@ class Kallisto:
             f"{'--single ' if single else ''}"
             f"{f'--fragment-length={fragment_length} ' if fragment_length else ''}"
             f"{f'--sd={sd} ' if sd else ''}"
-            f"--threads={threads}"
+            f"--threads={threads} "
+            f"{' '.join(files)}"
         )
 
         os.system(
