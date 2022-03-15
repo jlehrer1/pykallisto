@@ -97,7 +97,7 @@ class Kallisto:
 
         os.system(
             command 
-        ) 
+        )
 
     def bus(
         self,
@@ -148,6 +148,52 @@ class Kallisto:
             command 
         )
 
+    def h5dump(
+        self, 
+        output_dir: str
+    ):
+
+        command = (
+            "kallisto h5dump "
+            f"--output-dir={output_dir}"
+        )
+
+        os.system(
+            command
+        )
+
+    def merge(
+        self,
+        index: str,
+        output_dir: str 
+    ):
+        command = (
+            "kallisto merge "
+            f"--index={index}"
+            f"--output-dir={output_dir}"
+        )
+
+        os.system(
+            command 
+        )
+
+    def inspect(
+        self,
+        gfa: str=None,
+        gtf: str=None,
+        bed: str=None,
+    ):
+        command = (
+            "kallisto inspect "
+            f"{f'--gfa={gfa} ' if gfa else ''}"
+            f"{f'--gtf={gtf} ' if gtf else ''}"
+            f"{f'--bed={bed} ' if bed else ''}"
+        )
+
+        os.system(
+            command
+        )
+        
 class KallistoBus:
     def __init__(
         self,
