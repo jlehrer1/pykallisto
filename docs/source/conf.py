@@ -23,7 +23,7 @@ sys.path.append(os.path.join(here, '..', '..'))
 project = 'PyKallisto'
 copyright = '2022, Julian Lehrer'
 author = 'Julian Lehrer'
-
+master_doc = 'index'
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
