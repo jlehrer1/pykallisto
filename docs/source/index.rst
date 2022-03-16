@@ -1,8 +1,3 @@
-.. PyKallisto documentation master file, created by
-   sphinx-quickstart on Tue Mar 15 19:56:13 2022.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 PyKallisto: A Python API for RNA-seq analysis via Kallisto & Bustools
 ============================================================================
 
@@ -35,10 +30,9 @@ The base Kallisto wrapper. Has the same functionality as the Kallisto command li
 
 A wrapper for the `kallisto | bustools` tool, specifically for creating gene x expression matrices from raw fastq files. 
 
-.. code-blocks:: python 
+.. code-block:: python 
 
    pykallisto.Kallisto 
-
 
 .. toctree::
    :maxdepth: 2
