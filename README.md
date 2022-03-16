@@ -22,8 +22,3 @@ data.index(index='index', output_dir='index_directory/')
 # Quantify transcripts in parallel on 4 threads
 data.quant(output_dir='results/', threads=4)
 ```
-
-Methods:  
-`index`  
-Parameters:
-
