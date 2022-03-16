@@ -22,25 +22,3 @@ data.index(index='index', output_dir='index_directory/')
 # Quantify transcripts in parallel on 4 threads
 data.quant(output_dir='results/', threads=4)
 ```
-
-Methods:
-
-    Computes equivalence classes for reads and quantifies abundances (deprecated).
-
-    Arguments:
-
-    index: Filename for the kallisto index to be used for pseudoalignment. If Kallisto class was initialized with index file name, this is optional
-    files: List of fastq file paths, or path to folder containing fastq files
-    output_dir: Directory to write output to
-    umi: First file in pair is a UMI file
-    batch: Process files listed in FILE
-    quant: Quantify using EM algorithm (only in batch mode)
-    bus: Output a BUS file
-    single: Quantify single-end reads
-    fragment_length: Estimated average fragment length
-    sd: Estimated standard deviation of fragment length (default: -l, -s values are estimated from paired end data, but are required when using --single unless outputting a BUS file via --bus)
-    fr_stranded: Strand specific reads, first read forward
-    rf_stranded: Strand specific reads, first read reverse
-    num: Output number of read in BUS file flag column (only with --bus)
-    threads: Number of threads to use (default: 1)Parameters:
-
