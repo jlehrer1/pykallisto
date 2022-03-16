@@ -24,7 +24,7 @@ __________
 
 The base Kallisto wrapper. Has the same functionality as the Kallisto command line, with some added flexibility for easy API usage and implementation into larger RNA-seq pipelines.
 
-.. code-block:: python 
+.. code-block:: python
 
    pykallisto.KallistoBus
 
@@ -33,9 +33,3 @@ A wrapper for the `kallisto | bustools` tool, specifically for creating gene x e
 .. code-block:: python 
 
    pykallisto.Kallisto 
-
-.. toctree::
-   :maxdepth: 2
-
-   usage 
-
